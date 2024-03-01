@@ -1,5 +1,6 @@
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder, guard};
 use std::sync::Mutex;
+use std::time::Duration;
 
 struct AppStateWithCounter {
     counter: Mutex<i32>,
@@ -37,6 +38,7 @@ async fn main() -> std::io::Result<()> {
             .route("/hey", web::get().to(manual_hello))
             .route("/", web::get().to(index))
     })
+        .keep_alive(Duration::from_secs(5))
         .workers(4)
         .bind(("127.0.0.1", 8080))?
         .run()
