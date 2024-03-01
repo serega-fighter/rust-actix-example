@@ -1,19 +1,9 @@
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder, guard};
 use std::sync::Mutex;
 
 struct AppStateWithCounter {
     counter: Mutex<i32>,
 }
-
-// state of the app
-struct AppState {
-    app_name: String,
-}
-
-/*#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
-}*/
 
 #[post("/echo")]
 async fn echo(req_body: String) -> impl Responder {
@@ -40,10 +30,14 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(counter.clone())
-            .service(echo)
+            .service(
+                web::scope("/")
+                    .guard(guard::Host("www.rust-lang.org"))
+                    .route("", web::to(|| async { HttpResponse::Ok().body("www") })))
             .route("/hey", web::get().to(manual_hello))
             .route("/", web::get().to(index))
     })
+        .workers(4)
         .bind(("127.0.0.1", 8080))?
         .run()
         .await
